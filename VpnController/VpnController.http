@@ -1,0 +1,6 @@
+@VpnController_HostAddress = http://localhost:5135
+
+GET {{VpnController_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

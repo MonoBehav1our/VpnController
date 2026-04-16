@@ -1,0 +1,44 @@
+services:
+  vpncontroller:
+    build:
+      context: .
+      dockerfile: VpnController/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Database__SqlitePath: ${DATABASE_SQLITE_PATH:-data/vpncontroller.db}
+      Subscriptions__BaseUrl: ${SUBSCRIPTIONS_BASE_URL}
+      Subscriptions__SubscriptionGuid: ${SUBSCRIPTIONS_SUBSCRIPTION_GUID}
+      Subscriptions__RefreshIntervalSeconds: ${SUBSCRIPTIONS_REFRESH_INTERVAL_SECONDS:-86400}
+      Xray__LogLevel: ${XRAY_LOG_LEVEL:-warning}
+      Xray__PublicHost: ${XRAY_PUBLIC_HOST}
+      Xray__InboundShared__Dest: ${XRAY_INBOUND_SHARED_DEST}
+      Xray__InboundShared__PrivateKey: ${XRAY_INBOUND_SHARED_PRIVATE_KEY}
+      Xray__InboundShared__PublicKey: ${XRAY_INBOUND_SHARED_PUBLIC_KEY}
+    volumes:
+      - vpncontroller_data:/app/data
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - vpncontroller
+
+volumes:
+  vpncontroller_data:
+  caddy_data:
+  caddy_config:

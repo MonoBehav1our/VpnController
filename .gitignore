@@ -1,0 +1,9 @@
+.env
+.idea/
+identifier.sqlite
+*.db
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
