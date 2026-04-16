@@ -15,9 +15,8 @@ VPNCONTROLLER_UPSTREAM=host.docker.internal:5000
 # SQLite (относительно каталога приложения, обычно data/vpncontroller.db)
 DATABASE_SQLITE_PATH=data/vpncontroller.db
 
-# Подписка (base URL со слэшем на конце)
+# Подписка (полный URL; в конфиге — SubscriptionRefreshOptions:SubscriptionUrl)
 SUBSCRIPTIONS_BASE_URL=https://example.com/sub/
-SUBSCRIPTIONS_SUBSCRIPTION_GUID=
 SUBSCRIPTIONS_REFRESH_INTERVAL_SECONDS=86400
 
 # Xray — публичный адрес для vless:// (IP или DNS сервера VPN)
@@ -28,7 +27,7 @@ XRAY_INBOUND_SHARED_DEST=www.example.com:443
 XRAY_INBOUND_SHARED_PRIVATE_KEY=
 XRAY_INBOUND_SHARED_PUBLIC_KEY=
 
-# 10 shortId через запятую (порядок = direct-in, sota-01 … sota-09). Перекрывает Xray:InboundShortIds в appsettings.
+# 10 shortId через запятую (порядок = direct-in, sota-01 … sota-09). Перекрывает XrayCoreOptions:InboundShortIds в appsettings.
 XRAY_INBOUND_SHORT_IDS=
 
 XRAY_LOG_LEVEL=warning

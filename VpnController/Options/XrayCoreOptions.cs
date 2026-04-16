@@ -6,8 +6,6 @@ namespace VpnController.Services;
 /// </summary>
 public sealed class XrayCoreOptions
 {
-    public const string SectionName = "Xray";
-    
     public string LogLevel { get; set; } = "warning";
 
     /// <summary>
@@ -29,6 +27,8 @@ public sealed class XrayCoreOptions
     public string? InboundShortIdsCsv { get; set; }
 
     public List<InboundBindingOptions> Inbounds { get; set; } = new();
+
+    public XrayRestartOptions Restart { get; set; } = new();
 
     /// <summary>Первый порт инбаундов; далее +1 на каждый (всего 10 портов).</summary>
     public const int InboundPortBase = 8080;

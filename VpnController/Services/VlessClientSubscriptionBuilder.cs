@@ -23,24 +23,25 @@ public sealed class VlessClientSubscriptionBuilder
         if (string.IsNullOrWhiteSpace(_options.PublicHost))
         {
             throw new InvalidOperationException(
-                "Укажите Xray:PublicHost — публичный IP или DNS, куда клиенты подключаются.");
+                $"Укажите {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.PublicHost)} — публичный IP или DNS, куда клиенты подключаются.");
         }
 
         var shared = _options.InboundShared;
         if (string.IsNullOrWhiteSpace(shared.PublicKey))
         {
             throw new InvalidOperationException(
-                "Укажите Xray:InboundShared:PublicKey (пара к PrivateKey, из вывода xray x25519).");
+                $"Укажите {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShared)}:{nameof(InboundSharedOptions.PublicKey)} (пара к PrivateKey, из вывода xray x25519).");
         }
 
         if (shared.ServerNames.Count == 0)
         {
-            throw new InvalidOperationException("Xray:InboundShared:ServerNames не должен быть пустым.");
+            throw new InvalidOperationException(
+                $"{nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShared)}:{nameof(InboundSharedOptions.ServerNames)} не должен быть пустым.");
         }
 
         if (_options.Inbounds.Count == 0)
         {
-            throw new InvalidOperationException("Xray:Inbounds пуст.");
+            throw new InvalidOperationException($"{nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.Inbounds)} пуст.");
         }
 
         var sni = shared.ServerNames[0];

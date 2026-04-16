@@ -7,7 +7,8 @@ public static class SqliteDatabaseSetup
 {
     public static string GetConnectionString(IConfiguration configuration, IHostEnvironment environment)
     {
-        var relativePath = configuration["Database:SqlitePath"] ?? "data/vpncontroller.db";
+        var relativePath = configuration.GetSection(nameof(DatabaseOptions)).GetValue<string>(nameof(DatabaseOptions.SqlitePath))
+            ?? "data/vpncontroller.db";
         var fullPath = Path.GetFullPath(Path.Combine(environment.ContentRootPath, relativePath));
         var directory = Path.GetDirectoryName(fullPath);
         if (!string.IsNullOrEmpty(directory))

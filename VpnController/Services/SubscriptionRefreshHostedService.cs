@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 namespace VpnController.Services;
 
 /// <summary>
-/// Периодически скачивает подписку по <see cref="SubscriptionRefreshOptions.SubscriptionGuid"/> и обновляет <see cref="SubscriptionRepository"/>.
+/// Периодически скачивает подписку по <see cref="SubscriptionRefreshOptions.SubscriptionUrl"/> и обновляет <see cref="SubscriptionRepository"/>.
 /// </summary>
 public sealed class SubscriptionRefreshHostedService : BackgroundService
 {
@@ -60,7 +60,8 @@ public sealed class SubscriptionRefreshHostedService : BackgroundService
     {
         if (string.IsNullOrWhiteSpace(options.SubscriptionUrl))
         {
-            _logger.LogDebug("Subscriptions:SubscriptionGuid is not set; skipping refresh");
+            _logger.LogDebug("{Path} is not set; skipping refresh",
+                $"{nameof(SubscriptionRefreshOptions)}:{nameof(SubscriptionRefreshOptions.SubscriptionUrl)}");
             return;
         }
         

@@ -30,7 +30,7 @@ public class XrayController : ControllerBase
     }
 
     /// <summary>
-    /// Записать конфиг на диск (как GET config) и выполнить Xray:Restart:RestartCommand.
+    /// Записать конфиг на диск (как GET config) и выполнить XrayCoreOptions:Restart:RestartCommand.
     /// </summary>
     [HttpPost("restart")]
     public async Task<IActionResult> Restart(CancellationToken cancellationToken)
@@ -79,7 +79,7 @@ public class XrayController : ControllerBase
 
     /// <summary>
     /// Подписка для клиента (HAPP и др.): base64, как у SOTA — внутри UTF-8 со всеми vless-строками по инбаундам;
-    /// адрес и Reality (shortId, pbk, sni) из <c>Xray:*</c>, UUID — пользователь из маршрута.
+    /// адрес и Reality (shortId, pbk, sni) из <c>XrayCoreOptions:*</c>, UUID — пользователь из маршрута.
     /// </summary>
     [HttpGet("subscription/{userId:guid}")]
     [Produces("text/plain")]

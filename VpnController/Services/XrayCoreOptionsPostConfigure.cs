@@ -26,7 +26,7 @@ public sealed class XrayCoreOptionsPostConfigure : IPostConfigureOptions<XrayCor
                 if (string.IsNullOrEmpty(s))
                 {
                     throw new InvalidOperationException(
-                        $"Xray: inbound index {i} ({options.Inbounds[i].Tag}): пустой shortId.");
+                        $"{nameof(XrayCoreOptions)}: inbound index {i} ({options.Inbounds[i].Tag}): пустой shortId.");
                 }
 
                 options.Inbounds[i].ShortIds = new List<string> { s };
@@ -43,7 +43,7 @@ public sealed class XrayCoreOptionsPostConfigure : IPostConfigureOptions<XrayCor
             if (options.Inbounds[i].ShortIds.Count == 0 || string.IsNullOrWhiteSpace(options.Inbounds[i].ShortIds[0]))
             {
                 throw new InvalidOperationException(
-                    $"Xray: inbound «{options.Inbounds[i].Tag}»: задайте shortId через Xray:InboundShortIdsCsv (10 значений через запятую) или Xray:InboundShortIds (массив из 10 строк).");
+                    $"{nameof(XrayCoreOptions)}: inbound «{options.Inbounds[i].Tag}»: задайте shortId через {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShortIdsCsv)} (10 значений через запятую) или {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShortIds)} (массив из 10 строк).");
             }
         }
     }

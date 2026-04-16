@@ -15,7 +15,7 @@ public class ConnectionStringsController : ControllerBase
     }
 
     /// <summary>
-    /// Строки единственной подписки из in-memory кэша (обновляется фоновой задачей по <c>Subscriptions:SubscriptionGuid</c>).
+    /// Строки единственной подписки из in-memory кэша (обновляется фоновой задачей по <c>SubscriptionRefreshOptions:SubscriptionUrl</c>).
     /// </summary>
     [HttpGet]
     [Produces("application/json")]

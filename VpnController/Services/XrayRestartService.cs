@@ -10,7 +10,7 @@ namespace VpnController.Services;
 /// </summary>
 public sealed class XrayRestartService
 {
-    private readonly IOptions<XrayRestartOptions> _options;
+    private readonly IOptions<XrayCoreOptions> _options;
     private readonly SubscriptionRepository _repository;
     private readonly XrayConfigGenerator _generator;
     private readonly IServiceScopeFactory _scopeFactory;
@@ -18,7 +18,7 @@ public sealed class XrayRestartService
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     public XrayRestartService(
-        IOptions<XrayRestartOptions> options,
+        IOptions<XrayCoreOptions> options,
         SubscriptionRepository repository,
         XrayConfigGenerator generator,
         IServiceScopeFactory scopeFactory,
@@ -33,18 +33,19 @@ public sealed class XrayRestartService
 
     public async Task<XrayRestartResult> WriteConfigAndRestartAsync(CancellationToken cancellationToken = default)
     {
-        var opts = _options.Value;
+        var opts = _options.Value.Restart;
         if (!opts.Enabled)
         {
             return new XrayRestartResult(false, StatusCodes.Status503ServiceUnavailable,
-                "Xray:Restart:Enabled = false.");
+                $"{nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.Restart)}:{nameof(XrayRestartOptions.Enabled)} = false.");
         }
 
         if (string.IsNullOrWhiteSpace(opts.ConfigFilePath))
         {
-            _logger.LogWarning("Xray:Restart:ConfigFilePath is empty");
+            _logger.LogWarning("{Path} is empty",
+                $"{nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.Restart)}:{nameof(XrayRestartOptions.ConfigFilePath)}");
             return new XrayRestartResult(false, StatusCodes.Status503ServiceUnavailable,
-                "Xray:Restart:ConfigFilePath is not set.");
+                $"{nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.Restart)}:{nameof(XrayRestartOptions.ConfigFilePath)} is not set.");
         }
 
         await _gate.WaitAsync(cancellationToken);
@@ -54,7 +55,7 @@ public sealed class XrayRestartService
             {
                 _logger.LogDebug("No subscription lines in store");
                 return new XrayRestartResult(false, StatusCodes.Status400BadRequest,
-                    "Нет данных подписки в памяти (сначала дождитесь фетча или проверьте Subscriptions).");
+                    $"Нет данных подписки в памяти (сначала дождитесь фетча или проверьте {nameof(SubscriptionRefreshOptions)}).");
             }
 
             if (!SubscriptionSotaOutboundsResolver.TryResolve(lines, out var sotaOutbounds))

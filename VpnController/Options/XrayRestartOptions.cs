@@ -5,8 +5,6 @@ namespace VpnController.Services;
 /// </summary>
 public sealed class XrayRestartOptions
 {
-    public const string SectionName = "Xray:Restart";
-
     public bool Enabled { get; set; }
 
     public string ConfigFilePath { get; set; } = "/usr/local/etc/xray/config.json";

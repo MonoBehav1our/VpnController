@@ -2,8 +2,6 @@ namespace VpnController.Services;
 
 public sealed class SubscriptionRefreshOptions
 {
-    public const string SectionName = "Subscriptions";
-
     /// <summary>
     /// Base URL ending with slash (настраивается в конфиге или через env).
     /// </summary>

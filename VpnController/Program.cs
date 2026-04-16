@@ -21,16 +21,16 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
 builder.Services.Configure<SubscriptionRefreshOptions>(
-    builder.Configuration.GetSection(SubscriptionRefreshOptions.SectionName));
+    builder.Configuration.GetSection(nameof(SubscriptionRefreshOptions)));
 
 builder.Services.AddSingleton<SubscriptionRepository>();
 
 builder.Services.Configure<XrayCoreOptions>(
-    builder.Configuration.GetSection(XrayCoreOptions.SectionName));
+    builder.Configuration.GetSection(nameof(XrayCoreOptions)));
 
 builder.Services.AddSingleton<IPostConfigureOptions<XrayCoreOptions>, XrayCoreOptionsPostConfigure>();
-builder.Services.Configure<XrayRestartOptions>(
-    builder.Configuration.GetSection(XrayRestartOptions.SectionName));
+builder.Services.Configure<DatabaseOptions>(
+    builder.Configuration.GetSection(nameof(DatabaseOptions)));
 
 builder.Services.AddSingleton<XrayConfigGenerator>();
 builder.Services.AddSingleton<VlessClientSubscriptionBuilder>();
