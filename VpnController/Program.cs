@@ -23,7 +23,7 @@ builder.Services.AddHttpClient();
 builder.Services.Configure<SubscriptionRefreshOptions>(
     builder.Configuration.GetSection(SubscriptionRefreshOptions.SectionName));
 
-builder.Services.AddSingleton<InMemorySubscriptionStore>();
+builder.Services.AddSingleton<SubscriptionRepository>();
 
 builder.Services.Configure<XrayCoreOptions>(
     builder.Configuration.GetSection(XrayCoreOptions.SectionName));

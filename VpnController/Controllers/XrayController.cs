@@ -10,14 +10,14 @@ namespace VpnController.Controllers;
 public class XrayController : ControllerBase
 {
     private readonly UserRepository _users;
-    private readonly InMemorySubscriptionStore _subscriptions;
+    private readonly SubscriptionRepository _subscriptions;
     private readonly XrayConfigGenerator _generator;
     private readonly VlessClientSubscriptionBuilder _clientSubscription;
     private readonly XrayRestartService _xrayRestart;
 
     public XrayController(
         UserRepository users,
-        InMemorySubscriptionStore subscriptions,
+        SubscriptionRepository subscriptions,
         XrayConfigGenerator generator,
         VlessClientSubscriptionBuilder clientSubscription,
         XrayRestartService xrayRestart)
@@ -57,9 +57,9 @@ public class XrayController : ControllerBase
             return NotFound();
         }
 
-        if (!SubscriptionSotaOutboundsResolver.TryResolve(lines, out var sotaOutbounds, out var resolveError))
+        if (!SubscriptionSotaOutboundsResolver.TryResolve(lines, out var sotaOutbounds))
         {
-            return BadRequest(resolveError);
+            return BadRequest();
         }
 
         var users = await _users.GetAllAsync(cancellationToken);
@@ -93,7 +93,11 @@ public class XrayController : ControllerBase
         try
         {
             var lines = _clientSubscription.BuildLinesForUser(userId);
-            var body = VlessClientSubscriptionBuilder.ToSubscriptionBase64(lines);
+            
+            //to base64 format for clients
+            var text = string.Join("\n", lines);
+            var body = Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
+            
             return Content(body, "text/plain", Encoding.UTF8);
         }
         catch (InvalidOperationException ex)

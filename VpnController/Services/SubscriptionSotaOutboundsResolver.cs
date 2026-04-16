@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace VpnController.Services;
 
 /// <summary>
@@ -7,29 +5,16 @@ namespace VpnController.Services;
 /// </summary>
 public static class SubscriptionSotaOutboundsResolver
 {
-    public const int RequiredLineCount = 9;
-
-    public static bool TryResolve(
-        IReadOnlyList<string> subscriptionLines,
-        [NotNullWhen(true)] out ParsedVlessConnection[]? outbounds,
-        out string? errorMessage)
+    public static bool TryResolve(IReadOnlyList<string> subscriptionLines, out ParsedVlessConnection[]? outbounds)
     {
         outbounds = null;
-        errorMessage = null;
-
-        if (subscriptionLines.Count < RequiredLineCount)
-        {
-            errorMessage =
-                $"В подписке должно быть не менее {RequiredLineCount} vless-строк для sota-01..sota-09.";
-            return false;
-        }
-
-        var parsed = new ParsedVlessConnection[RequiredLineCount];
-        for (var i = 0; i < RequiredLineCount; i++)
+        
+        var parsed = new ParsedVlessConnection[subscriptionLines.Count];
+        for (var i = 0; i < subscriptionLines.Count; i++)
         {
             if (!VlessUriParser.TryParse(subscriptionLines[i], out var conn) || conn is null)
             {
-                errorMessage = $"Некорректная vless-строка (строка {i + 1}): {subscriptionLines[i]}";
+                // todo: return logging
                 return false;
             }
 

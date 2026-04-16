@@ -3,23 +3,23 @@ using Microsoft.Extensions.Options;
 namespace VpnController.Services;
 
 /// <summary>
-/// Периодически скачивает подписку по <see cref="SubscriptionRefreshOptions.SubscriptionGuid"/> и обновляет <see cref="InMemorySubscriptionStore"/>.
+/// Периодически скачивает подписку по <see cref="SubscriptionRefreshOptions.SubscriptionGuid"/> и обновляет <see cref="SubscriptionRepository"/>.
 /// </summary>
 public sealed class SubscriptionRefreshHostedService : BackgroundService
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly InMemorySubscriptionStore _store;
+    private readonly SubscriptionRepository _repository;
     private readonly IOptions<SubscriptionRefreshOptions> _options;
     private readonly ILogger<SubscriptionRefreshHostedService> _logger;
 
     public SubscriptionRefreshHostedService(
         IHttpClientFactory httpClientFactory,
-        InMemorySubscriptionStore store,
+        SubscriptionRepository repository,
         IOptions<SubscriptionRefreshOptions> options,
         ILogger<SubscriptionRefreshHostedService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _store = store;
+        _repository = repository;
         _options = options;
         _logger = logger;
     }
@@ -56,39 +56,28 @@ public sealed class SubscriptionRefreshHostedService : BackgroundService
         }
     }
 
-    private async Task RefreshAsync(SubscriptionRefreshOptions opt, CancellationToken cancellationToken)
+    private async Task RefreshAsync(SubscriptionRefreshOptions options, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(opt.SubscriptionGuid))
+        if (string.IsNullOrWhiteSpace(options.SubscriptionUrl))
         {
             _logger.LogDebug("Subscriptions:SubscriptionGuid is not set; skipping refresh");
             return;
         }
-
-        if (!Guid.TryParse(opt.SubscriptionGuid.Trim(), out var subscriptionId))
-        {
-            _logger.LogWarning("Subscriptions:SubscriptionGuid is not a valid Guid: {Value}", opt.SubscriptionGuid);
-            return;
-        }
-
+        
         var client = _httpClientFactory.CreateClient();
         client.DefaultRequestHeaders.UserAgent.ParseAdd("VpnController/1.0");
-
-        var baseUrl = opt.BaseUrl.TrimEnd('/') + "/";
-        var url = $"{baseUrl}{subscriptionId:D}";
-
+        
         try
         {
-            var body = await client.GetStringAsync(new Uri(url), cancellationToken);
+            var body = await client.GetStringAsync(new Uri(options.SubscriptionUrl), cancellationToken);
             var lines = SubscriptionDecoder.DecodeSubscriptionLines(body);
-            _store.Replace(lines);
-            _logger.LogInformation(
-                "Updated subscription {Guid} with {Count} connection strings",
-                subscriptionId,
-                lines.Length);
+            _repository.Replace(lines);
+            
+            _logger.LogInformation("Updated subscription with {Count} connection strings", lines.Length);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to refresh subscription {Guid}", subscriptionId);
+            _logger.LogWarning(ex, "Failed to refresh subscription {url}", options.SubscriptionUrl);
         }
     }
 }

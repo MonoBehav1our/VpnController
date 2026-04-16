@@ -9,27 +9,13 @@ public sealed class XrayCoreOptionsPostConfigure : IPostConfigureOptions<XrayCor
 {
     public void PostConfigure(string? name, XrayCoreOptions options)
     {
-        if (options.Inbounds.Count != XrayCoreOptions.ExpectedInboundCount)
-        {
-            return;
-        }
-
         IReadOnlyList<string>? shortIds = null;
 
         if (!string.IsNullOrWhiteSpace(options.InboundShortIdsCsv))
         {
             var parts = options.InboundShortIdsCsv.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length != XrayCoreOptions.ExpectedInboundCount)
-            {
-                throw new InvalidOperationException(
-                    $"Xray:InboundShortIdsCsv must contain exactly {XrayCoreOptions.ExpectedInboundCount} comma-separated shortIds.");
-            }
 
             shortIds = parts;
-        }
-        else if (options.InboundShortIds.Count == XrayCoreOptions.ExpectedInboundCount)
-        {
-            shortIds = options.InboundShortIds;
         }
 
         if (shortIds is not null)

@@ -11,7 +11,7 @@ namespace VpnController.Services;
 public sealed class XrayRestartService
 {
     private readonly IOptions<XrayRestartOptions> _options;
-    private readonly InMemorySubscriptionStore _store;
+    private readonly SubscriptionRepository _repository;
     private readonly XrayConfigGenerator _generator;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<XrayRestartService> _logger;
@@ -19,13 +19,13 @@ public sealed class XrayRestartService
 
     public XrayRestartService(
         IOptions<XrayRestartOptions> options,
-        InMemorySubscriptionStore store,
+        SubscriptionRepository repository,
         XrayConfigGenerator generator,
         IServiceScopeFactory scopeFactory,
         ILogger<XrayRestartService> logger)
     {
         _options = options;
-        _store = store;
+        _repository = repository;
         _generator = generator;
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -50,17 +50,17 @@ public sealed class XrayRestartService
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (!_store.TryGetLines(out var lines))
+            if (!_repository.TryGetLines(out var lines))
             {
                 _logger.LogDebug("No subscription lines in store");
                 return new XrayRestartResult(false, StatusCodes.Status400BadRequest,
                     "Нет данных подписки в памяти (сначала дождитесь фетча или проверьте Subscriptions).");
             }
 
-            if (!SubscriptionSotaOutboundsResolver.TryResolve(lines, out var sotaOutbounds, out var resolveError))
+            if (!SubscriptionSotaOutboundsResolver.TryResolve(lines, out var sotaOutbounds))
             {
-                _logger.LogWarning("Subscription lines invalid for xray config: {Error}", resolveError);
-                return new XrayRestartResult(false, StatusCodes.Status400BadRequest, resolveError);
+                _logger.LogWarning("Subscription lines invalid for xray config");
+                return new XrayRestartResult(false, StatusCodes.Status400BadRequest, "Invalid xray config");
             }
 
             await using var scope = _scopeFactory.CreateAsyncScope();

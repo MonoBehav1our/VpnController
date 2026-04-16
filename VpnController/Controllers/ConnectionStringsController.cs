@@ -7,11 +7,11 @@ namespace VpnController.Controllers;
 [Route("api/[controller]")]
 public class ConnectionStringsController : ControllerBase
 {
-    private readonly InMemorySubscriptionStore _store;
+    private readonly SubscriptionRepository _repository;
 
-    public ConnectionStringsController(InMemorySubscriptionStore store)
+    public ConnectionStringsController(SubscriptionRepository repository)
     {
-        _store = store;
+        _repository = repository;
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ public class ConnectionStringsController : ControllerBase
     [Produces("application/json")]
     public ActionResult<IReadOnlyList<string>> Get()
     {
-        if (!_store.TryGetLines(out var lines))
+        if (!_repository.TryGetLines(out var lines))
         {
             return NotFound();
         }

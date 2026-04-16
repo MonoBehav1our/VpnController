@@ -45,7 +45,7 @@ public sealed class VlessClientSubscriptionBuilder
 
         var sni = shared.ServerNames[0];
         var uid = userId.ToString("D");
-        var host = FormatHostForVlessUri(_options.PublicHost.Trim());
+        var host = _options.PublicHost.Trim();
         var pbk = shared.PublicKey.Trim();
 
         var lines = new string[_options.Inbounds.Count];
@@ -67,31 +67,6 @@ public sealed class VlessClientSubscriptionBuilder
         }
 
         return lines;
-    }
-
-    /// <summary>
-    /// Тело подписки в том же виде, что отдаёт SOTA: base64(UTF-8) от списка строк, разделённых переводами строк.
-    /// </summary>
-    public static string ToSubscriptionBase64(IReadOnlyList<string> vlessLines)
-    {
-        var text = string.Join("\n", vlessLines);
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
-    }
-
-    /// <summary>IPv6 в vless:// должен быть в квадратных скобках.</summary>
-    private static string FormatHostForVlessUri(string host)
-    {
-        if (host.Length == 0)
-        {
-            return host;
-        }
-
-        if (host.Contains(':', StringComparison.Ordinal) && host[0] != '[')
-        {
-            return $"[{host}]";
-        }
-
-        return host;
     }
 
     private static string BuildVlessLine(

@@ -7,10 +7,7 @@ namespace VpnController.Services;
 public sealed class XrayCoreOptions
 {
     public const string SectionName = "Xray";
-
-    /// <summary>Ожидаемое число инбаундов: direct-in + sota-01-in … sota-09-in.</summary>
-    public const int ExpectedInboundCount = 10;
-
+    
     public string LogLevel { get; set; } = "warning";
 
     /// <summary>
@@ -35,27 +32,4 @@ public sealed class XrayCoreOptions
 
     /// <summary>Первый порт инбаундов; далее +1 на каждый (всего 10 портов).</summary>
     public const int InboundPortBase = 8080;
-}
-
-public sealed class InboundSharedOptions
-{
-    public string Dest { get; set; } = "";
-
-    public List<string> ServerNames { get; set; } = new();
-
-    public string PrivateKey { get; set; } = "";
-
-    /// <summary>
-    /// Публичный ключ Reality (pbk в vless), пара к <see cref="PrivateKey"/> — из вывода <c>xray x25519</c>.
-    /// </summary>
-    public string PublicKey { get; set; } = "";
-}
-
-public sealed class InboundBindingOptions
-{
-    public string Tag { get; set; } = "";
-
-    public int Port { get; set; }
-
-    public List<string> ShortIds { get; set; } = new();
 }

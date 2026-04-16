@@ -19,19 +19,6 @@ public sealed class XrayConfigGenerator
 
     public JsonObject Build(IReadOnlyList<Guid> userIds, IReadOnlyList<ParsedVlessConnection> upstreams)
     {
-        if (_options.Inbounds.Count != XrayCoreOptions.ExpectedInboundCount)
-        {
-            throw new InvalidOperationException(
-                $"Xray:Inbounds must contain exactly {XrayCoreOptions.ExpectedInboundCount} entries (direct-in + 9 sota).");
-        }
-
-        if (upstreams.Count != SubscriptionSotaOutboundsResolver.RequiredLineCount)
-        {
-            throw new ArgumentException(
-                $"Exactly {SubscriptionSotaOutboundsResolver.RequiredLineCount} parsed vless upstreams are required for sota-01..sota-09.",
-                nameof(upstreams));
-        }
-
         var shared = _options.InboundShared;
 
         var inbounds = new JsonArray();
@@ -50,7 +37,7 @@ public sealed class XrayConfigGenerator
             }
         };
 
-        for (var i = 0; i < SubscriptionSotaOutboundsResolver.RequiredLineCount; i++)
+        for (var i = 0; i < upstreams.Count; i++)
         {
             var tag = $"sota-{i + 1:D2}";
             outbounds.Add(BuildVlessOutbound(tag, upstreams[i]));
@@ -66,7 +53,7 @@ public sealed class XrayConfigGenerator
             }
         };
 
-        for (var i = 0; i < SubscriptionSotaOutboundsResolver.RequiredLineCount; i++)
+        for (var i = 0; i < upstreams.Count; i++)
         {
             var inboundTag = $"sota-{i + 1:D2}-in";
             var outboundTag = $"sota-{i + 1:D2}";
