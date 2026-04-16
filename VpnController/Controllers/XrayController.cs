@@ -13,17 +13,35 @@ public class XrayController : ControllerBase
     private readonly InMemorySubscriptionStore _subscriptions;
     private readonly XrayConfigGenerator _generator;
     private readonly VlessClientSubscriptionBuilder _clientSubscription;
+    private readonly XrayRestartService _xrayRestart;
 
     public XrayController(
         UserRepository users,
         InMemorySubscriptionStore subscriptions,
         XrayConfigGenerator generator,
-        VlessClientSubscriptionBuilder clientSubscription)
+        VlessClientSubscriptionBuilder clientSubscription,
+        XrayRestartService xrayRestart)
     {
         _users = users;
         _subscriptions = subscriptions;
         _generator = generator;
         _clientSubscription = clientSubscription;
+        _xrayRestart = xrayRestart;
+    }
+
+    /// <summary>
+    /// Записать конфиг на диск (как GET config) и выполнить Xray:Restart:RestartCommand.
+    /// </summary>
+    [HttpPost("restart")]
+    public async Task<IActionResult> Restart(CancellationToken cancellationToken)
+    {
+        var r = await _xrayRestart.WriteConfigAndRestartAsync(cancellationToken);
+        if (!r.Ok)
+        {
+            return StatusCode(r.StatusCode, new { detail = r.Detail });
+        }
+
+        return NoContent();
     }
 
     /// <summary>

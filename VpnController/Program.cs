@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using VpnController.Data;
 using VpnController.Repositories;
 using VpnController.Services;
@@ -26,8 +27,14 @@ builder.Services.AddSingleton<InMemorySubscriptionStore>();
 
 builder.Services.Configure<XrayCoreOptions>(
     builder.Configuration.GetSection(XrayCoreOptions.SectionName));
+
+builder.Services.AddSingleton<IPostConfigureOptions<XrayCoreOptions>, XrayCoreOptionsPostConfigure>();
+builder.Services.Configure<XrayRestartOptions>(
+    builder.Configuration.GetSection(XrayRestartOptions.SectionName));
+
 builder.Services.AddSingleton<XrayConfigGenerator>();
 builder.Services.AddSingleton<VlessClientSubscriptionBuilder>();
+builder.Services.AddSingleton<XrayRestartService>();
 
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 {

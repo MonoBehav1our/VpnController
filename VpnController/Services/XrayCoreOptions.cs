@@ -20,7 +20,21 @@ public sealed class XrayCoreOptions
 
     public InboundSharedOptions InboundShared { get; set; } = new();
 
+    /// <summary>
+    /// Ровно 10 shortId Reality (по порядку инбаундов). Перекрывает ShortIds у элементов <see cref="Inbounds"/>.
+    /// Альтернатива: <see cref="InboundShortIdsCsv"/>.
+    /// </summary>
+    public List<string> InboundShortIds { get; set; } = new();
+
+    /// <summary>
+    /// Десять shortId через запятую (тот же порядок, что и инбаунды). Удобно для одной env-переменной.
+    /// </summary>
+    public string? InboundShortIdsCsv { get; set; }
+
     public List<InboundBindingOptions> Inbounds { get; set; } = new();
+
+    /// <summary>Первый порт инбаундов; далее +1 на каждый (всего 10 портов).</summary>
+    public const int InboundPortBase = 8080;
 }
 
 public sealed class InboundSharedOptions

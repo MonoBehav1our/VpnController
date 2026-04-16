@@ -4,5 +4,5 @@
 
 {$DOMAIN} {
 	encode gzip
-	reverse_proxy vpncontroller:8080
+	reverse_proxy {$UPSTREAM}
 }
