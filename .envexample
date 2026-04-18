@@ -1,38 +1,29 @@
-# Скопируйте в `.env` в корне репозитория.
-# Запуск API: ./scripts/run-vpncontroller.sh  (подхватывает этот файл)
-# Caddy в Docker: docker compose up -d  (см. VPNCONTROLLER_UPSTREAM)
+# Скопируйте в .env и заполните. Docker Compose подхватывает .env автоматически;
+# имена переменных — как в ASP.NET Core Configuration (секция__Свойство).
 
-# Слушать API (по умолчанию 127.0.0.1:5000 — Caddy проксирует сюда из контейнера)
-ASPNETCORE_URLS=http://127.0.0.1:5000
+# --- Caddy (также подставляются в caddy/Caddyfile через env) ---
+DOMAIN=
+ACME_EMAIL=
+# Обратный прокси на API (Compose по умолчанию: vpncontroller:5080)
+# UPSTREAM=vpncontroller:5080
 
-# Caddy / Let's Encrypt
-DOMAIN=api.example.com
-ACME_EMAIL=you@example.com
+# --- База (SQLite внутри тома /app/data) ---
+DatabaseOptions__SqlitePath=data/vpncontroller.db
 
-# Куда Caddy проксирует (хост:порт API на машине)
-VPNCONTROLLER_UPSTREAM=host.docker.internal:5000
+# --- Подписка провайдера (строки vless для outbounds) ---
+SubscriptionRefreshOptions__SubscriptionUrl=
+SubscriptionRefreshOptions__RefreshIntervalSeconds=86400
 
-# SQLite (относительно каталога приложения, обычно data/vpncontroller.db)
-DATABASE_SQLITE_PATH=data/vpncontroller.db
-
-# Подписка (полный URL; в конфиге — SubscriptionRefreshOptions:SubscriptionUrl)
-SUBSCRIPTIONS_BASE_URL=https://example.com/sub/
-SUBSCRIPTIONS_REFRESH_INTERVAL_SECONDS=86400
-
-# Xray — публичный адрес для vless:// (IP или DNS сервера VPN)
-XRAY_PUBLIC_HOST=
-
-# Reality (общие для инбаундов)
-XRAY_INBOUND_SHARED_DEST=www.example.com:443
-XRAY_INBOUND_SHARED_PRIVATE_KEY=
-XRAY_INBOUND_SHARED_PUBLIC_KEY=
-
-# 10 shortId через запятую (порядок = direct-in, sota-01 … sota-09). Перекрывает XrayCoreOptions:InboundShortIds в appsettings.
-XRAY_INBOUND_SHORT_IDS=
-
-XRAY_LOG_LEVEL=warning
-
-# POST /api/xray/restart — запись конфига и рестарт (на хосте: true + права на каталог и systemctl)
-XRAY_RESTART_ENABLED=true
-XRAY_RESTART_CONFIG_PATH=/usr/local/etc/xray/config.json
-XRAY_RESTART_COMMAND=systemctl restart xray
+# --- Генерация конфига Xray и vless:// для клиентов ---
+# Публичный адрес в подписках пользователей
+XrayCoreOptions__PublicHost=
+# Первый порт инбаундов; далее +1 на каждый по порядку (совместить с публикацией портов сервиса xray)
+XrayCoreOptions__InboundPortFirst=8080
+XrayCoreOptions__LogLevel=warning
+# Reality: dest, SNI (массив через индексы), ключи
+XrayCoreOptions__InboundShared__Dest=
+XrayCoreOptions__InboundShared__ServerNames__0=
+XrayCoreOptions__InboundShared__PrivateKey=
+XrayCoreOptions__InboundShared__PublicKey=
+# Десять shortId через запятую, порядок как у Inbounds в appsettings.json
+XrayCoreOptions__InboundShortIdsCsv=

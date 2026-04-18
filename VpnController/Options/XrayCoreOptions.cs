@@ -28,8 +28,6 @@ public sealed class XrayCoreOptions
 
     public List<InboundBindingOptions> Inbounds { get; set; } = new();
 
-    public XrayRestartOptions Restart { get; set; } = new();
-
-    /// <summary>Первый порт инбаундов; далее +1 на каждый (всего 10 портов).</summary>
-    public const int InboundPortBase = 8080;
+    /// <summary>Первый порт инбаундов; далее +1 на каждый по порядку (<c>InboundPortFirst</c> … <c>InboundPortFirst + Inbounds.Count − 1</c>).</summary>
+    public int InboundPortFirst { get; set; } = 8080;
 }

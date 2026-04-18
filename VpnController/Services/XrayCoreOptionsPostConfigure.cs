@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 namespace VpnController.Services;
 
 /// <summary>
-/// Единый источник портов (8080…8089) и shortId для инбаундов и клиентских подписок.
+/// Единый источник портов (<see cref="XrayCoreOptions.InboundPortFirst"/> + индекс) и shortId для инбаундов и клиентских подписок.
 /// </summary>
 public sealed class XrayCoreOptionsPostConfigure : IPostConfigureOptions<XrayCoreOptions>
 {
@@ -35,7 +35,7 @@ public sealed class XrayCoreOptionsPostConfigure : IPostConfigureOptions<XrayCor
 
         for (var i = 0; i < options.Inbounds.Count; i++)
         {
-            options.Inbounds[i].Port = XrayCoreOptions.InboundPortBase + i;
+            options.Inbounds[i].Port = options.InboundPortFirst + i;
         }
 
         for (var i = 0; i < options.Inbounds.Count; i++)
@@ -43,7 +43,7 @@ public sealed class XrayCoreOptionsPostConfigure : IPostConfigureOptions<XrayCor
             if (options.Inbounds[i].ShortIds.Count == 0 || string.IsNullOrWhiteSpace(options.Inbounds[i].ShortIds[0]))
             {
                 throw new InvalidOperationException(
-                    $"{nameof(XrayCoreOptions)}: inbound «{options.Inbounds[i].Tag}»: задайте shortId через {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShortIdsCsv)} (10 значений через запятую) или {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShortIds)} (массив из 10 строк).");
+                    $"{nameof(XrayCoreOptions)}: inbound «{options.Inbounds[i].Tag}»: задайте shortId через {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShortIdsCsv)} ({options.Inbounds.Count} значений через запятую) или {nameof(XrayCoreOptions)}:{nameof(XrayCoreOptions.InboundShortIds)} (массив из {options.Inbounds.Count} строк).");
             }
         }
     }

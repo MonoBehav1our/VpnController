@@ -34,7 +34,6 @@ builder.Services.Configure<DatabaseOptions>(
 
 builder.Services.AddSingleton<XrayConfigGenerator>();
 builder.Services.AddSingleton<VlessClientSubscriptionBuilder>();
-builder.Services.AddSingleton<XrayRestartService>();
 
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 {

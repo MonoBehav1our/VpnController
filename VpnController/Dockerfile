@@ -9,7 +9,8 @@ RUN dotnet publish -c Release -o /app/publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
+# 5080 — не пересекается с инбаундами Xray по умолчанию (8080…); в compose задаётся явно.
+ENV ASPNETCORE_URLS=http://+:5080
 ENV ASPNETCORE_ENVIRONMENT=Production
-EXPOSE 8080
+EXPOSE 5080
 ENTRYPOINT ["dotnet", "VpnController.dll"]
