@@ -1,4 +1,4 @@
-namespace VpnController.Data;
+namespace VpnController.Options;
 
 public sealed class DatabaseOptions
 {

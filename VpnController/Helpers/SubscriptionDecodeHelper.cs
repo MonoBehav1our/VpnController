@@ -1,8 +1,8 @@
 using System.Text;
 
-namespace VpnController.Services;
+namespace VpnController.Helpers;
 
-internal static class SubscriptionDecoder
+internal static class SubscriptionDecodeHelper
 {
     public static string[] DecodeSubscriptionLines(string base64Body)
     {

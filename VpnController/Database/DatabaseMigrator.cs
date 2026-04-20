@@ -1,17 +1,14 @@
 using System.Reflection;
 using DbUp;
-using DbUp.Sqlite;
+using VpnController.Helpers;
 
-namespace VpnController.Data;
+namespace VpnController.Database;
 
 public static class DatabaseMigrator
 {
-    /// <summary>
-    /// Применяет SQL-скрипты из сборки (embedded <c>Database/Scripts/*.sql</c>), журнал — таблица SchemaVersions.
-    /// </summary>
     public static void Upgrade(IConfiguration configuration, IHostEnvironment environment)
     {
-        var connectionString = SqliteDatabaseSetup.GetConnectionString(configuration, environment);
+        var connectionString = SqliteDatabaseSetupHelper.GetConnectionString(configuration, environment);
 
         var upgrader = DeployChanges.To
             .SqliteDatabase(connectionString)

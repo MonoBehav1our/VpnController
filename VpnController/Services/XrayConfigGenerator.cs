@@ -1,69 +1,46 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
+using VpnController.Data;
+using VpnController.Options;
+using VpnController.Repositories;
 
 namespace VpnController.Services;
 
-/// <summary>
-/// Собирает JSON конфига Xray: клиенты из БД дублируются во всех инбаундах;
-/// строки подписки (первые 9 vless) — в outbounds sota-01 … sota-09 по порядку.
-/// </summary>
 public sealed class XrayConfigGenerator
 {
+    private readonly UserRepository _userRepository;
+    private readonly SotaSubscriptionRepository _sotaSubscriptionRepository;
+
     private readonly XrayCoreOptions _options;
 
-    public XrayConfigGenerator(IOptions<XrayCoreOptions> options)
+    public XrayConfigGenerator(
+        UserRepository userRepository, 
+        SotaSubscriptionRepository sotaSubscriptionRepository,
+        IOptions<XrayCoreOptions> options)
     {
-        _options = options.Value;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _sotaSubscriptionRepository = sotaSubscriptionRepository ?? throw new ArgumentNullException(nameof(sotaSubscriptionRepository));
+        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public JsonObject Build(IReadOnlyList<Guid> userIds, IReadOnlyList<ParsedVlessConnection> upstreams)
+    public async Task<JsonObject> Build()
     {
-        var shared = _options.InboundShared;
+        var users = await _userRepository.GetAllAsync();
+        var inbound = BuildMainInbound(users);
+        
+        var inbounds = new JsonArray { inbound };
 
-        var inbounds = new JsonArray();
-        foreach (var ib in _options.Inbounds)
+        var outbounds = new JsonArray();
+
+        var sotaVlessConnections = _sotaSubscriptionRepository.GetConnections();
+        foreach (var sotaVlessConnection in sotaVlessConnections)
         {
-            // Новый JsonArray на каждый inbound: один и тот же JsonNode нельзя вешать в несколько родителей.
-            inbounds.Add(BuildInbound(ib, userIds, shared));
+            var tag = sotaVlessConnection.Name;
+            outbounds.Add(BuildVlessOutbound(sotaVlessConnection));
         }
 
-        var outbounds = new JsonArray
-        {
-            new JsonObject
-            {
-                ["tag"] = "direct",
-                ["protocol"] = "freedom"
-            }
-        };
-
-        for (var i = 0; i < upstreams.Count; i++)
-        {
-            var tag = $"sota-{i + 1:D2}";
-            outbounds.Add(BuildVlessOutbound(tag, upstreams[i]));
-        }
-
-        var rules = new JsonArray
-        {
-            new JsonObject
-            {
-                ["type"] = "field",
-                ["inboundTag"] = new JsonArray("direct-in"),
-                ["outboundTag"] = "direct"
-            }
-        };
-
-        for (var i = 0; i < upstreams.Count; i++)
-        {
-            var inboundTag = $"sota-{i + 1:D2}-in";
-            var outboundTag = $"sota-{i + 1:D2}";
-            rules.Add(new JsonObject
-            {
-                ["type"] = "field",
-                ["inboundTag"] = new JsonArray(inboundTag),
-                ["outboundTag"] = outboundTag
-            });
-        }
+        var rules = BuildRoutingRules(users);
 
         return new JsonObject
         {
@@ -74,44 +51,37 @@ public sealed class XrayConfigGenerator
         };
     }
 
-    private static JsonArray BuildClientsArray(IReadOnlyList<Guid> userIds)
+    private JsonObject BuildMainInbound(IReadOnlyList<User> users)
     {
         var clients = new JsonArray();
-        foreach (var id in userIds)
+        foreach (var user in users)
         {
-            clients.Add(new JsonObject
+            foreach (var id in user.ClientUuids)
             {
-                ["id"] = id.ToString("D"),
-                ["flow"] = "xtls-rprx-vision"
-            });
+                clients.Add(new JsonObject
+                {
+                    ["id"] = id.ToString(),
+                    ["flow"] = "xtls-rprx-vision"
+                });
+            }
         }
 
-        return clients;
-    }
-
-    private static JsonObject BuildInbound(
-        InboundBindingOptions ib,
-        IReadOnlyList<Guid> userIds,
-        InboundSharedOptions shared)
-    {
-        var clients = BuildClientsArray(userIds);
-
         var serverNames = new JsonArray();
-        foreach (var name in shared.ServerNames)
+        foreach (var name in _options.ServerName)
         {
             serverNames.Add(name);
         }
 
         var shortIds = new JsonArray();
-        foreach (var sid in ib.ShortIds)
+        foreach (var shortId in _options.ShortId)
         {
-            shortIds.Add(sid);
+            shortIds.Add(shortId);
         }
 
         return new JsonObject
         {
-            ["tag"] = ib.Tag,
-            ["port"] = ib.Port,
+            ["tag"] = _options.MainInboundTag,
+            ["port"] = _options.InboundPort,
             ["protocol"] = "vless",
             ["settings"] = new JsonObject
             {
@@ -124,21 +94,50 @@ public sealed class XrayConfigGenerator
                 ["security"] = "reality",
                 ["realitySettings"] = new JsonObject
                 {
-                    ["dest"] = shared.Dest,
+                    ["dest"] = _options.Dest,
                     ["serverNames"] = serverNames,
-                    ["privateKey"] = shared.PrivateKey,
+                    ["privateKey"] = _options.PrivateKey,
                     ["shortIds"] = shortIds
                 }
             }
         };
     }
 
-    private static JsonObject BuildVlessOutbound(string tag, ParsedVlessConnection c)
+    private JsonArray BuildRoutingRules(IReadOnlyList<User> clients)
     {
-        var flow = string.IsNullOrEmpty(c.Flow) ? "xtls-rprx-vision" : c.Flow;
+        var rules = new JsonArray();
+        var sotaVlessConnections = _sotaSubscriptionRepository.GetConnections();
+
+
+        for (var i = 0; i < sotaVlessConnections.Count; i++)
+        {
+            var sotaVlessConnection = sotaVlessConnections[i];
+            foreach (var client in clients)
+            {
+                if (client.ClientUuids.Count != sotaVlessConnections.Count)
+                {
+                    throw new InvalidOperationException("SOTA changed, mapping broken");
+                }
+                
+                var outboundTag = sotaVlessConnection.Name;
+
+                rules.Add(new JsonObject
+                {
+                    ["type"] = "field",
+                    ["user"] = new JsonArray(client.ClientUuids[i].ToString()),
+                    ["outboundTag"] = outboundTag
+                });
+            }
+        }
+
+        return rules;
+    }
+
+    private JsonObject BuildVlessOutbound(SotaVlessConnection sotaInbound)
+    {
         return new JsonObject
         {
-            ["tag"] = tag,
+            ["tag"] = sotaInbound.Name,
             ["protocol"] = "vless",
             ["settings"] = new JsonObject
             {
@@ -146,15 +145,15 @@ public sealed class XrayConfigGenerator
                 {
                     new JsonObject
                     {
-                        ["address"] = c.Host,
-                        ["port"] = c.Port,
+                        ["address"] = sotaInbound.Host,
+                        ["port"] = sotaInbound.Port,
                         ["users"] = new JsonArray
                         {
                             new JsonObject
                             {
-                                ["id"] = c.UserId,
+                                ["id"] = sotaInbound.UserId,
                                 ["encryption"] = "none",
-                                ["flow"] = flow
+                                ["flow"] = "xtls-rprx-vision"
                             }
                         }
                     }
@@ -166,10 +165,10 @@ public sealed class XrayConfigGenerator
                 ["security"] = "reality",
                 ["realitySettings"] = new JsonObject
                 {
-                    ["serverName"] = c.ServerName ?? "",
-                    ["publicKey"] = c.PublicKey ?? "",
-                    ["shortId"] = c.ShortId ?? "",
-                    ["fingerprint"] = string.IsNullOrEmpty(c.Fingerprint) ? "chrome" : c.Fingerprint
+                    ["serverName"] = sotaInbound.ServerName,
+                    ["publicKey"] = sotaInbound.PublicKey,
+                    ["shortId"] = sotaInbound.ShortId,
+                    ["fingerprint"] = "safari"
                 }
             }
         };

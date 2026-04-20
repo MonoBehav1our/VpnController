@@ -1,28 +1,31 @@
-# Прод: cp .env.example .env и задайте DOMAIN, ACME_EMAIL, секреты Xray/подписки — затем: docker compose up -d --build
-# API внутри сети на 5080, чтобы не пересекаться с инбаундами Xray (8080… по InboundPortFirst).
 services:
   vpncontroller:
     build:
       context: .
       dockerfile: VpnController/Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5080
-    env_file:
-      - path: .env
-        required: false
+      XRAY_DOCKER_CONTAINER_NAME: ${XRAY_DOCKER_CONTAINER_NAME:-xray}
+      XRAY_CONFIG_DIRECTORY: ${XRAY_CONFIG_DIRECTORY:-/xray/config}
     volumes:
       - vpncontroller_data:/app/data
+      - ./config/xray:/xray/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - xray
 
   xray:
     image: teddysun/xray:latest
     restart: unless-stopped
+    container_name: xray
     volumes:
-      # Готовый JSON для ядра; позже синхронизация с API / отдельный пайплайн.
-      - ./deploy/xray:/etc/xray
+      - ./config/xray:/etc/xray
     ports:
-      - "8080-8089:8080-8089/tcp"
+      - "8443:8443/tcp"
 
   caddy:
     image: caddy:2-alpine

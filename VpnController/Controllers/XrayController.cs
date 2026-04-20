@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using VpnController.Repositories;
 using VpnController.Services;
@@ -9,47 +10,28 @@ namespace VpnController.Controllers;
 [Route("api/[controller]")]
 public class XrayController : ControllerBase
 {
-    private readonly UserRepository _users;
-    private readonly SubscriptionRepository _subscriptions;
-    private readonly XrayConfigGenerator _generator;
-    private readonly VlessClientSubscriptionBuilder _clientSubscription;
+    private readonly UserRepository _userRepository;
+    private readonly XrayConfigGenerator _xrayConfigGenerator;
+    private readonly ClientSubscriptionBuilder _clientSubscriptionBuilder;
+    private readonly SotaSubscriptionRefreshService _sotaSubscriptionRefreshService;
 
-    public XrayController(
-        UserRepository users,
-        SubscriptionRepository subscriptions,
-        XrayConfigGenerator generator,
-        VlessClientSubscriptionBuilder clientSubscription)
+    public XrayController(UserRepository userRepository,
+        XrayConfigGenerator xrayConfigGenerator,
+        ClientSubscriptionBuilder clientSubscriptionBuilder,
+        SotaSubscriptionRefreshService sotaSubscriptionRefreshService)
     {
-        _users = users;
-        _subscriptions = subscriptions;
-        _generator = generator;
-        _clientSubscription = clientSubscription;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _xrayConfigGenerator = xrayConfigGenerator ?? throw new ArgumentNullException(nameof(xrayConfigGenerator));
+        _clientSubscriptionBuilder = clientSubscriptionBuilder ?? throw new ArgumentNullException(nameof(clientSubscriptionBuilder));
+        _sotaSubscriptionRefreshService = sotaSubscriptionRefreshService ?? throw new ArgumentNullException(nameof(sotaSubscriptionRefreshService));
     }
 
-    /// <summary>
-    /// Готовый JSON-конфиг Xray: 10 инбаундов (direct-in и 9 по странам из подписки), в каждом — все пользователи;
-    /// аутбаунды direct + sota-01..09 из строк подписки.
-    /// </summary>
     [HttpGet("config")]
-    [Produces("application/json")]
     public async Task<IActionResult> GetConfig(CancellationToken cancellationToken)
     {
-        if (!_subscriptions.TryGetLines(out var lines))
-        {
-            return NotFound();
-        }
-
-        if (!SubscriptionSotaOutboundsResolver.TryResolve(lines, out var sotaOutbounds))
-        {
-            return BadRequest();
-        }
-
-        var users = await _users.GetAllAsync(cancellationToken);
-        var userIds = users.Select(u => u.Id).ToList();
-
         try
         {
-            var root = _generator.Build(userIds, sotaOutbounds);
+            var root = await _xrayConfigGenerator.Build();
             var json = XrayConfigGenerator.ToIndentedJson(root);
             return Content(json, "application/json");
         }
@@ -59,32 +41,38 @@ public class XrayController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Подписка для клиента (HAPP и др.): base64, как у SOTA — внутри UTF-8 со всеми vless-строками по инбаундам;
-    /// адрес и Reality (shortId, pbk, sni) из <c>XrayCoreOptions:*</c>, UUID — пользователь из маршрута.
-    /// </summary>
     [HttpGet("subscription/{userId:guid}")]
-    [Produces("text/plain")]
     public async Task<IActionResult> GetUserSubscription(Guid userId, CancellationToken cancellationToken)
     {
-        if (await _users.GetByIdAsync(userId, cancellationToken) is null)
+        if (await _userRepository.GetByIdAsync(userId, cancellationToken).ConfigureAwait(false) is not { } user)
         {
             return NotFound();
         }
 
         try
         {
-            var lines = _clientSubscription.BuildLinesForUser(userId);
-            
-            //to base64 format for clients
+            var lines = _clientSubscriptionBuilder.BuildLinesForUser(user);
             var text = string.Join("\n", lines);
             var body = Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
-            
             return Content(body, "text/plain", Encoding.UTF8);
         }
         catch (InvalidOperationException ex)
         {
             return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshConfig(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _sotaSubscriptionRefreshService.RefreshAsync(cancellationToken);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return Problem();
         }
     }
 }

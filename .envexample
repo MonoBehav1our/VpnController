@@ -1,29 +1,25 @@
-# Скопируйте в .env и заполните. Docker Compose подхватывает .env автоматически;
-# имена переменных — как в ASP.NET Core Configuration (секция__Свойство).
-
-# --- Caddy (также подставляются в caddy/Caddyfile через env) ---
+# --- Caddy ---
 DOMAIN=
 ACME_EMAIL=
-# Обратный прокси на API (Compose по умолчанию: vpncontroller:5080)
 # UPSTREAM=vpncontroller:5080
 
-# --- База (SQLite внутри тома /app/data) ---
+# --- SQLite (путь относительно /app в контейнере) ---
 DatabaseOptions__SqlitePath=data/vpncontroller.db
 
-# --- Подписка провайдера (строки vless для outbounds) ---
-SubscriptionRefreshOptions__SubscriptionUrl=
-SubscriptionRefreshOptions__RefreshIntervalSeconds=86400
+# --- Подписка SOTA (URL — секрет; интервал можно оставить по умолчанию) ---
+SotaSubscriptionRefreshOptions__SubscriptionUrl=
 
-# --- Генерация конфига Xray и vless:// для клиентов ---
-# Публичный адрес в подписках пользователей
+# --- Xray Reality (секреты и параметры инбаунда; LogLevel по умолчанию в appsettings.json) ---
 XrayCoreOptions__PublicHost=
-# Первый порт инбаундов; далее +1 на каждый по порядку (совместить с публикацией портов сервиса xray)
-XrayCoreOptions__InboundPortFirst=8080
-XrayCoreOptions__LogLevel=warning
-# Reality: dest, SNI (массив через индексы), ключи
-XrayCoreOptions__InboundShared__Dest=
-XrayCoreOptions__InboundShared__ServerNames__0=
-XrayCoreOptions__InboundShared__PrivateKey=
-XrayCoreOptions__InboundShared__PublicKey=
-# Десять shortId через запятую, порядок как у Inbounds в appsettings.json
-XrayCoreOptions__InboundShortIdsCsv=
+XrayCoreOptions__Dest=
+XrayCoreOptions__ServerName=
+XrayCoreOptions__PrivateKey=
+XrayCoreOptions__PublicKey=
+XrayCoreOptions__MainInboundTag=main-in
+XrayCoreOptions__InboundPort=8443
+XrayCoreOptions__ShortId=
+XrayCoreOptions__Fingerprint=
+
+# --- Куда API пишет конфиг и какой контейнер перезапускать ---
+# XRAY_DOCKER_CONTAINER_NAME=xray
+# XRAY_CONFIG_DIRECTORY=/xray/config

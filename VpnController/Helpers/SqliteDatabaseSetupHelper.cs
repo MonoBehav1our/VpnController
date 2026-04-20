@@ -1,9 +1,9 @@
-namespace VpnController.Data;
+using VpnController.Database;
+using VpnController.Options;
 
-/// <summary>
-/// Путь к файлу SQLite и строка подключения (каталог создаётся при необходимости).
-/// </summary>
-public static class SqliteDatabaseSetup
+namespace VpnController.Helpers;
+
+public static class SqliteDatabaseSetupHelper
 {
     public static string GetConnectionString(IConfiguration configuration, IHostEnvironment environment)
     {
