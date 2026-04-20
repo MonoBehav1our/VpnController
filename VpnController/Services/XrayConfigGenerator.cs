@@ -102,11 +102,6 @@ public sealed class XrayConfigGenerator
             var sotaVlessConnection = sotaVlessConnections[i];
             foreach (var client in clients)
             {
-                if (client.ClientUuids.Count != sotaVlessConnections.Count)
-                {
-                    throw new InvalidOperationException("SOTA changed, mapping broken");
-                }
-                
                 var outboundTag = sotaVlessConnection.Name;
 
                 rules.Add(new JsonObject
