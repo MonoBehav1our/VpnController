@@ -95,8 +95,7 @@ public sealed class XrayConfigGenerator
     {
         var rules = new JsonArray();
         var sotaVlessConnections = _sotaSubscriptionRepository.GetConnections();
-
-
+        
         for (var i = 0; i < sotaVlessConnections.Count; i++)
         {
             var sotaVlessConnection = sotaVlessConnections[i];

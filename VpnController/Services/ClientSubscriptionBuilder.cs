@@ -50,10 +50,16 @@ public sealed class ClientSubscriptionBuilder
 
         for (var i = 0; i < user.ClientUuids.Count; i++)
         {
+            var connection = _sotaSubscriptionRepository.GetConnection(i);
+            if (connection == null)
+            {
+                continue;
+            }
+            
             yield return BuildVlessLine(
                 user.ClientUuids[i].ToString(),
                 host, port, sni, pbk, shortId, fingerprint,
-                "Обход: " + _sotaSubscriptionRepository.GetConnection(i).Name
+                "Обход: " + connection.Name
             );
         }
     }

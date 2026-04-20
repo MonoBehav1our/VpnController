@@ -21,10 +21,15 @@ public sealed class SotaSubscriptionRepository
         }
     }
 
-    public SotaVlessConnection GetConnection(int index)
+    public SotaVlessConnection? GetConnection(int index)
     {
         lock (_lock)
         {
+            if (index < 0 || index >= _sotaVlessConnections.Count)
+            {
+                return null;
+            }
+            
             return _sotaVlessConnections[index];
         }
     }
