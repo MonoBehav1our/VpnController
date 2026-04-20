@@ -98,19 +98,23 @@ public sealed class XrayConfigGenerator
     {
         var rules = new JsonArray();
         var sotaVlessConnections = _sotaSubscriptionRepository.GetConnections();
-        
-        for (var i = 0; i < sotaVlessConnections.Count; i++)
-        {
-            var sotaVlessConnection = sotaVlessConnections[i];
-            foreach (var client in clients)
-            {
-                var outboundTag = sotaVlessConnection.Name;
 
+        foreach (var client in clients)
+        {
+            var userUuids = new JsonArray();
+
+            foreach (var uuid in client.ClientUuids)
+            {
+                userUuids.Add(uuid.ToString());
+            }
+
+            foreach (var connection in sotaVlessConnections)
+            {
                 rules.Add(new JsonObject
                 {
                     ["type"] = "field",
-                    ["user"] = new JsonArray(client.ClientUuids[i].ToString()),
-                    ["outboundTag"] = outboundTag
+                    ["user"] = userUuids,
+                    ["outboundTag"] = connection.Name
                 });
             }
         }
