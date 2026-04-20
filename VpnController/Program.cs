@@ -31,6 +31,9 @@ builder.Services.Configure<XrayCoreOptions>(
 builder.Services.Configure<DatabaseOptions>(
     builder.Configuration.GetSection(nameof(DatabaseOptions)));
 
+builder.Services.Configure<ApiAccessOptions>(
+    builder.Configuration.GetSection(nameof(ApiAccessOptions)));
+
 builder.Services.AddScoped<XrayConfigGenerator>();
 builder.Services.AddScoped<ClientSubscriptionBuilder>();
 

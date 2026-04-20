@@ -1,34 +1,43 @@
 using System.Text;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using VpnController.Helpers;
+using VpnController.Options;
 using VpnController.Repositories;
 using VpnController.Services;
 
 namespace VpnController.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class XrayController : ControllerBase
+[Route("api/singin")]
+public class VpnRuntimeController : ControllerBase
 {
     private readonly UserRepository _userRepository;
     private readonly XrayConfigGenerator _xrayConfigGenerator;
     private readonly ClientSubscriptionBuilder _clientSubscriptionBuilder;
     private readonly SotaSubscriptionRefreshService _sotaSubscriptionRefreshService;
+    private readonly ApiAccessOptions _apiAccess;
 
-    public XrayController(UserRepository userRepository,
+    public VpnRuntimeController(
+        UserRepository userRepository,
         XrayConfigGenerator xrayConfigGenerator,
         ClientSubscriptionBuilder clientSubscriptionBuilder,
-        SotaSubscriptionRefreshService sotaSubscriptionRefreshService)
+        SotaSubscriptionRefreshService sotaSubscriptionRefreshService,
+        IOptions<ApiAccessOptions> apiAccessOptions)
     {
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _xrayConfigGenerator = xrayConfigGenerator ?? throw new ArgumentNullException(nameof(xrayConfigGenerator));
         _clientSubscriptionBuilder = clientSubscriptionBuilder ?? throw new ArgumentNullException(nameof(clientSubscriptionBuilder));
         _sotaSubscriptionRefreshService = sotaSubscriptionRefreshService ?? throw new ArgumentNullException(nameof(sotaSubscriptionRefreshService));
+        _apiAccess = apiAccessOptions?.Value ?? throw new ArgumentNullException(nameof(apiAccessOptions));
     }
 
     [HttpGet("config")]
     public async Task<IActionResult> GetConfig(CancellationToken cancellationToken)
     {
+        if (!BearerTokenAuthHelper.IsValid(Request, _apiAccess.BearerToken))
+            return Unauthorized();
+
         try
         {
             var root = await _xrayConfigGenerator.Build();
@@ -64,12 +73,15 @@ public class XrayController : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshConfig(CancellationToken cancellationToken)
     {
+        if (!BearerTokenAuthHelper.IsValid(Request, _apiAccess.BearerToken))
+            return Unauthorized();
+
         try
         {
             await _sotaSubscriptionRefreshService.RefreshAsync(cancellationToken);
             return Ok();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Problem();
         }

@@ -6,6 +6,9 @@ ACME_EMAIL=
 # --- SQLite (путь относительно /app в контейнере) ---
 DatabaseOptions__SqlitePath=data/vpncontroller.db
 
+# --- Токен для админ-эндпоинтов (Authorization: Bearer …). Подписка по GUID без токена. --- 
+ApiAccess__BearerToken=
+
 # --- Подписка SOTA (URL — секрет; интервал можно оставить по умолчанию) ---
 SotaSubscriptionRefreshOptions__SubscriptionUrl=
 
