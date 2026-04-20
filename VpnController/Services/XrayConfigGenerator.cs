@@ -65,19 +65,7 @@ public sealed class XrayConfigGenerator
                 });
             }
         }
-
-        var serverNames = new JsonArray();
-        foreach (var name in _options.ServerName)
-        {
-            serverNames.Add(name);
-        }
-
-        var shortIds = new JsonArray();
-        foreach (var shortId in _options.ShortId)
-        {
-            shortIds.Add(shortId);
-        }
-
+        
         return new JsonObject
         {
             ["tag"] = _options.MainInboundTag,
@@ -95,9 +83,9 @@ public sealed class XrayConfigGenerator
                 ["realitySettings"] = new JsonObject
                 {
                     ["dest"] = _options.Dest,
-                    ["serverNames"] = serverNames,
+                    ["serverNames"] = _options.ServerName,
                     ["privateKey"] = _options.PrivateKey,
-                    ["shortIds"] = shortIds
+                    ["shortIds"] = _options.ShortId
                 }
             }
         };
