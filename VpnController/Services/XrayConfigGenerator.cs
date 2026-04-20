@@ -66,6 +66,9 @@ public sealed class XrayConfigGenerator
             }
         }
         
+        var serverNames = new JsonArray {_options.ServerName};
+        var shortIds = new JsonArray {_options.ShortId};
+        
         return new JsonObject
         {
             ["tag"] = _options.MainInboundTag,
@@ -83,9 +86,9 @@ public sealed class XrayConfigGenerator
                 ["realitySettings"] = new JsonObject
                 {
                     ["dest"] = _options.Dest,
-                    ["serverNames"] = _options.ServerName,
+                    ["serverNames"] = serverNames,
                     ["privateKey"] = _options.PrivateKey,
-                    ["shortIds"] = _options.ShortId
+                    ["shortIds"] = shortIds
                 }
             }
         };
