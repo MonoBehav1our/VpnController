@@ -11,6 +11,7 @@ namespace VpnController.Services;
 public sealed class SotaSubscriptionRefreshService 
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly XrayConfigGenerator _xrayConfigGenerator;
     private readonly SotaSubscriptionRepository _repository;
     private readonly SotaSubscriptionOutboundsResolver _sotaSubscriptionOutboundsResolver;
     private readonly IOptions<SotaSubscriptionRefreshOptions> _options;
@@ -20,12 +21,14 @@ public sealed class SotaSubscriptionRefreshService
 
     public SotaSubscriptionRefreshService(
         IHttpClientFactory httpClientFactory,
+        XrayConfigGenerator xrayConfigGenerator,
         SotaSubscriptionRepository repository,
         SotaSubscriptionOutboundsResolver sotaSubscriptionOutboundsResolver,
         IOptions<SotaSubscriptionRefreshOptions> options,
         ILogger<SotaSubscriptionRefreshService> logger)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _xrayConfigGenerator = xrayConfigGenerator ?? throw new ArgumentNullException(nameof(xrayConfigGenerator));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _sotaSubscriptionOutboundsResolver = sotaSubscriptionOutboundsResolver ?? throw new ArgumentNullException(nameof(sotaSubscriptionOutboundsResolver));
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -65,12 +68,11 @@ public sealed class SotaSubscriptionRefreshService
 
             try
             {
-                var configPath = Path.Combine("/xray/config", "config.json");
-                if (File.Exists(configPath))
-                {
-                    var json = await File.ReadAllTextAsync(configPath, cancellationToken);
-                    JsonDocument.Parse(json);
-                }
+                var configPath = "/xray/config/config.json";
+
+                var newConfigJson = await _xrayConfigGenerator.Build(); 
+
+                await File.WriteAllTextAsync(configPath, newConfigJson, cancellationToken);
             }
             catch (Exception ex)
             {

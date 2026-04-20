@@ -24,7 +24,7 @@ public sealed class XrayConfigGenerator
         _options = options.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<JsonObject> Build()
+    public async Task<string> Build()
     {
         var users = await _userRepository.GetAllAsync();
         var inbound = BuildMainInbound(users);
@@ -42,13 +42,13 @@ public sealed class XrayConfigGenerator
 
         var rules = BuildRoutingRules(users);
 
-        return new JsonObject
+        return ToIndentedJson(new JsonObject
         {
             ["log"] = new JsonObject { ["loglevel"] = _options.LogLevel },
             ["inbounds"] = inbounds,
             ["outbounds"] = outbounds,
             ["routing"] = new JsonObject { ["rules"] = rules }
-        };
+        });
     }
 
     private JsonObject BuildMainInbound(IReadOnlyList<User> users)
@@ -159,7 +159,7 @@ public sealed class XrayConfigGenerator
         };
     }
 
-    public static string ToIndentedJson(JsonObject root)
+    public string ToIndentedJson(JsonObject root)
     {
         return root.ToJsonString(new JsonSerializerOptions
         {

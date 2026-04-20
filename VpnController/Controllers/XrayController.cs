@@ -32,8 +32,7 @@ public class XrayController : ControllerBase
         try
         {
             var root = await _xrayConfigGenerator.Build();
-            var json = XrayConfigGenerator.ToIndentedJson(root);
-            return Content(json, "application/json");
+            return Content(root, "application/json");
         }
         catch (InvalidOperationException ex)
         {
