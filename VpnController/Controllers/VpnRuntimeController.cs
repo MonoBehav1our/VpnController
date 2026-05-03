@@ -54,7 +54,7 @@ public class VpnRuntimeController : ControllerBase
     {
         if (await _userRepository.GetByIdAsync(userId, cancellationToken).ConfigureAwait(false) is not { } user)
         {
-            return NotFound();
+            return Content("", "text/plain", Encoding.UTF8);
         }
 
         try
